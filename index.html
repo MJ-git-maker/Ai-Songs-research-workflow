@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Workflow — AI Disclosure × Racial Stereotype in Music</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141416;
+    --card: #1a1a1e;
+    --border: #2a2a30;
+    --accent1: #c8a96e;
+    --accent2: #7c9fd4;
+    --accent3: #b07cc8;
+    --accent4: #6ec8a0;
+    --text: #e8e6e0;
+    --muted: #8a8880;
+    --tag-bg: #1e1e24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 24px 80px; }
+
+  header { max-width: 900px; margin: 0 auto 48px; border-bottom: 1px solid var(--border); padding-bottom: 32px; }
+  .eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: var(--accent1); text-transform: uppercase; margin-bottom: 14px; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(24px, 4vw, 40px); line-height: 1.15; margin-bottom: 16px; }
+  h1 em { color: var(--accent1); font-style: italic; }
+  .subtitle { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 640px; }
+  .design-pill { display: inline-flex; align-items: center; gap: 10px; margin-top: 18px; background: var(--tag-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 16px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); }
+  .design-pill span { color: var(--muted); }
+  .design-pill b { color: var(--accent1); }
+
+  .progress-track { max-width: 900px; margin: 0 auto 36px; display: flex; align-items: center; position: relative; }
+  .progress-track::before { content: ''; position: absolute; top: 18px; left: 24px; right: 24px; height: 2px; background: var(--border); z-index: 0; }
+  .prog-node { display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; position: relative; z-index: 1; }
+  .prog-dot { width: 36px; height: 36px; border-radius: 50%; background: var(--card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); transition: all 0.3s; margin-bottom: 8px; }
+  .prog-label { font-size: 10px; color: var(--muted); text-align: center; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.3s; max-width: 70px; line-height: 1.3; }
+  .prog-node.active .prog-dot { background: var(--accent1); border-color: var(--accent1); color: #000; font-weight: bold; box-shadow: 0 0 16px rgba(200,169,110,0.4); }
+  .prog-node.active .prog-label { color: var(--accent1); }
+  .prog-node.done .prog-dot { background: var(--surface); border-color: var(--accent4); color: var(--accent4); }
+  .prog-node.done .prog-label { color: var(--accent4); }
+
+  .container { max-width: 900px; margin: 0 auto; }
+  .phase-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 28px; padding: 28px; background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent1); border-radius: 12px; animation: fadeIn 0.4s ease; }
+  .phase-number { font-family: 'DM Serif Display', serif; font-size: 52px; line-height: 1; color: var(--border); flex-shrink: 0; }
+  .phase-info h2 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 8px; }
+  .phase-info .phase-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+  .steps { display: flex; flex-direction: column; gap: 14px; }
+  .step-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; animation: fadeIn 0.4s ease both; transition: border-color 0.2s; }
+  .step-card:hover { border-color: #3a3a44; }
+  .step-header { display: flex; align-items: center; gap: 16px; padding: 18px 22px; cursor: pointer; user-select: none; }
+  .step-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); flex-shrink: 0; width: 28px; }
+  .step-title { font-size: 15px; font-weight: 500; flex: 1; }
+  .step-badge { font-family: 'DM Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+  .badge-lit { background: rgba(124,159,212,0.15); color: var(--accent2); }
+  .badge-gap { background: rgba(200,169,110,0.15); color: var(--accent1); }
+  .badge-construct { background: rgba(176,124,200,0.15); color: var(--accent3); }
+  .badge-design { background: rgba(110,200,160,0.15); color: var(--accent4); }
+  .badge-write { background: rgba(200,169,110,0.15); color: var(--accent1); }
+  .chevron { font-size: 11px; color: var(--muted); transition: transform 0.3s; flex-shrink: 0; }
+  .step-card.open .chevron { transform: rotate(180deg); }
+  .step-card.open .step-header { border-bottom: 1px solid var(--border); }
+  .step-body { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1); }
+  .step-card.open .step-body { max-height: 700px; overflow-y: auto; }
+  .step-content { padding: 20px 22px 22px 66px; }
+  .step-content p { font-size: 13.5px; color: var(--muted); line-height: 1.75; margin-bottom: 14px; }
+  .step-content p:last-child { margin-bottom: 0; }
+
+  .item-list { list-style: none; padding: 0; margin: 12px 0; }
+  .item-list li { font-size: 13px; color: #b8b6b0; padding: 7px 0 7px 18px; border-bottom: 1px solid var(--border); line-height: 1.55; position: relative; }
+  .item-list li:last-child { border-bottom: none; }
+  .item-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent1); font-size: 11px; }
+
+  .search-terms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .term-chip { font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 10px; background: var(--tag-bg); border: 1px solid var(--border); border-radius: 20px; color: var(--accent2); }
+
+  .gap-box { background: rgba(200,169,110,0.06); border: 1px solid rgba(200,169,110,0.2); border-radius: 8px; padding: 16px; margin-top: 10px; }
+  .gap-box .gap-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent1); text-transform: uppercase; margin-bottom: 8px; }
+  .gap-box p { color: #c8c6c0; font-size: 13px; margin: 0; line-height: 1.6; }
+
+  .construct-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .construct-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .construct-item .c-name { font-size: 13px; font-weight: 500; color: var(--accent3); margin-bottom: 4px; }
+  .construct-item .c-why { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .note-box { background: rgba(110,200,160,0.05); border: 1px solid rgba(110,200,160,0.2); border-radius: 8px; padding: 14px 16px; margin-top: 12px; font-size: 13px; color: var(--accent4); line-height: 1.65; }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 36px; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 11px 22px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; }
+  .btn-prev { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+  .btn-prev:hover { color: var(--text); border-color: #4a4a54; }
+  .btn-next { background: var(--accent1); color: #000; font-weight: 600; }
+  .btn-next:hover { background: #dbbf7e; }
+  .btn:disabled { opacity: 0.3; cursor: default; }
+  .phase-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 600px) { .construct-grid { grid-template-columns: 1fr; } .prog-label { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Research Workflow · IS / Business School · 2×2 Experiment</div>
+  <h1>AI Disclosure <em>&amp;</em> Racial Stereotype<br>in the Music Industry</h1>
+  <p class="subtitle">A step-by-step workflow from literature review to survey construct derivation — tailored to your 2(No AI Disclosure vs. AI Disclosure) × 2(Black Profile vs. White Profile) experiment.</p>
+  <div class="design-pill">
+    <span>Design:</span> <b>2×2 Between-Subjects</b>
+    <span>|</span> <span>Platform: SoundHarbor (fictional)</span>
+    <span>|</span> <span>DVs: WTP · Purchase Intent · Quality</span>
+  </div>
+</header>
+
+<div class="container">
+  <div class="progress-track" id="progressTrack"></div>
+  <div class="phase-header" id="phaseHeader"></div>
+  <div class="steps" id="stepsContainer"></div>
+  <div class="nav-row">
+    <button class="btn btn-prev" id="btnPrev" onclick="changePhase(-1)">← Previous Phase</button>
+    <span class="phase-count" id="phaseCount"></span>
+    <button class="btn btn-next" id="btnNext" onclick="changePhase(1)">Next Phase →</button>
+  </div>
+</div>
+
+<script>
+const phases = [
+  {
+    title: "Broad AI Disclosure Literature",
+    desc: "Survey AI disclosure effects across multiple domains — healthcare, e-commerce, chatbots, creative services — before narrowing to music. Build the theoretical scaffolding your study will rest on.",
+    color: "#7c9fd4",
+    steps: [
+      {
+        title: "AI Disclosure in General Consumer Contexts",
+        badge: "badge-lit", badgeLabel: "Literature",
+        content: `<p>Start with the broadest layer: how does revealing AI involvement affect consumer trust, evaluation, and behavior across domains?</p>
+        <p><strong style="color:#e8e6e0">Key theories to anchor your review:</strong></p>
+        <ul class="item-list">
+          <li>Algorithm Aversion & Appreciation (Dietvorst et al. 2015; Logg et al. 2019)</li>
+          <li>Uncanny Valley extended to AI-generated content (Mori 1970; more recent audio/text extensions)</li>
+          <li>Source Credibility Theory — disclosure shifts perceived authenticity of the source</li>
+          <li>Algorithmic Transparency & Trust (GDPR-context studies, AI explainability literature)</li>
+          <li>FTC disclosure analogy — native advertising disclosure as conceptual parallel</li>
+        </ul>
+        <p><strong style="color:#e8e6e0">Recommended search terms:</strong></p>
+        <div class="search-terms">
+          <span class="term-chip">AI disclosure consumer behavior</span>
+          <span class="term-chip">algorithm aversion appreciation</span>
+          <span class="term-chip">AI-generated content perception</span>
+          <span class="term-chip">algorithmic transparency trust</span>
+          <span class="term-chip">AI label willingness to pay</span>
+          <span class="term-chip">chatbot disclosure effects</span>
+        </div>`
+      },
+      {
+        title: "AI Disclosure in Creative & Cultural Industries",
+        badge: "badge-lit", badgeLabel: "Literature",
+        content: `<p>Narrow to creative work: how does AI co-creation labeling affect perceived artistic value, authenticity, and purchasing behavior for creative outputs?</p>
+        <ul class="item-list">
+          <li>Labor illusion & effort heuristics in creative evaluation (Norton, Mochon & Ariely 2012)</li>
+          <li>Human-touch premium — AI-generated vs. human-made art valuation experiments</li>
+          <li>AI co-creation framing: "collaborative with AI" vs. "made by AI" effects on evaluation</li>
+          <li>IS/MIS studies on AI content labeling on social and creative platforms (2022–2025)</li>
+          <li>Authenticity in art consumption — Grayson & Martinec (2004); Beverland (2005)</li>
+        </ul>
+        <div class="search-terms">
+          <span class="term-chip">AI-generated art authenticity</span>
+          <span class="term-chip">human vs AI creativity evaluation</span>
+          <span class="term-chip">AI co-creation disclosure framing</span>
+          <span class="term-chip">labor perception creative product</span>
+          <span class="term-chip">generative AI creative value</span>
+        </div>`
+      },
+      {
+        title: "AI Disclosure Specifically in Music",
+        badge: "badge-lit", badgeLabel: "Literature",
+        content: `<p>This is the thinnest layer — very few experimental studies exist. Capture what's there and document what's missing. This is part of your gap.</p>
+        <ul class="item-list">
+          <li>AI music generation tools (Suno, Udio, AIVA) and emerging public perception studies</li>
+          <li>Streaming platforms' policies on AI-flagged content (Spotify, Apple Music statements)</li>
+          <li>Music authenticity and genre expectations (especially salient for Black artists in R&B/Hip-hop)</li>
+          <li>Industry reports: RIAA, IFPI on AI policy and disclosure norms (2023–2025)</li>
+        </ul>
+        <div class="search-terms">
+          <span class="term-chip">AI music disclosure listener perception</span>
+          <span class="term-chip">AI generated music authenticity</span>
+          <span class="term-chip">streaming platform AI label</span>
+          <span class="term-chip">AI co-creation music willingness to pay</span>
+        </div>
+        <div class="note-box"><strong>Note:</strong> Very few controlled experiments on AI disclosure in music exist as of 2024–2025. This gap is likely your strongest contribution claim.</div>`
+      }
+    ]
+  },
+  {
+    title: "Racial Stereotype Literature",
+    desc: "Understand how racial stereotypes operate in consumer and cultural contexts, then focus on music's racial dynamics. This layer reveals which stereotyping mechanisms your survey must measure.",
+    color: "#c8a96e",
+    steps: [
+      {
+        title: "Racial Stereotyping in General Consumer Contexts",
+        badge: "badge-lit", badgeLabel: "Literature",
+        content: `<p>Build the theoretical base: how do racial cues (names, photos, profiles) activate stereotypes that distort evaluations?</p>
+        <ul class="item-list">
+          <li>Racial bias in marketplace audit studies — Bertrand & Mullainathan (2004) foundational</li>
+          <li>Statistical discrimination theory vs. taste-based discrimination (Becker)</li>
+          <li>Implicit Association Theory — automatic racial bias activation (Greenwald et al.)</li>
+          <li>Race-of-face effects in perceived quality and credibility of service providers</li>
+          <li>Racial profiling on gig/platform economy (Airbnb: Edelman et al. 2017; Uber studies)</li>
+          <li>Whiteness as default prototype in Western consumer culture</li>
+        </ul>
+        <div class="search-terms">
+          <span class="term-chip">racial stereotype consumer evaluation</span>
+          <span class="term-chip">race cue product quality judgment</span>
+          <span class="term-chip">implicit racial bias marketplace</span>
+          <span class="term-chip">Black White face evaluation experiment</span>
+          <span class="term-chip">racial discrimination platform economy</span>
+        </div>`
+      },
+      {
+        title: "Racial Stereotyping in Music & Creative Industries",
+        badge: "badge-lit", badgeLabel: "Literature",
+        content: `<p>Music is deeply racialized. Genre-race associations, authenticity expectations, and racial pay gaps all shape how artists are evaluated.</p>
+        <ul class="item-list">
+          <li>Genre-race associations: Hip-hop/R&B ↔ Blackness; country/classical ↔ Whiteness</li>
+          <li>Authenticity expectations by race — "selling out" and "keeping it real" discourse in Black music</li>
+          <li>Cross-race evaluation of musical talent: same music, different perceived artist race studies</li>
+          <li>Racial pay gaps and streaming disparities for Black vs. White artists</li>
+          <li>Cultural appropriation vs. appreciation framing effects on evaluation</li>
+          <li>Racial bias in Grammy nominations and radio airplay literature</li>
+        </ul>
+        <div class="search-terms">
+          <span class="term-chip">racial stereotypes music evaluation</span>
+          <span class="term-chip">genre race association music</span>
+          <span class="term-chip">Black artist authenticity music</span>
+          <span class="term-chip">race cue musician quality perception</span>
+          <span class="term-chip">racial bias streaming platform</span>
+        </div>`
+      },
+      {
+        title: "Intersection: AI + Race in Algorithmic Systems",
+        badge: "badge-lit", badgeLabel: "Literature",
+        content: `<p>A critical emerging area — does AI framing interact with racial cues to amplify, neutralize, or complicate stereotypes?</p>
+        <ul class="item-list">
+          <li>Algorithmic bias and racial fairness (Obermeyer et al. 2019; Buolamwini & Gebru 2018)</li>
+          <li>Does AI labeling make race more or less salient in evaluations?</li>
+          <li>Dehumanization concerns when AI label is applied to minority creators specifically</li>
+          <li>Racial stereotypes in human-AI collaboration: who gets credit, who gets blamed?</li>
+          <li>Platform "neutrality" narratives and their racial implications</li>
+        </ul>
+        <div class="search-terms">
+          <span class="term-chip">algorithmic bias race AI</span>
+          <span class="term-chip">AI label race perception</span>
+          <span class="term-chip">AI dehumanization racial minority</span>
+          <span class="term-chip">race AI collaboration attribution</span>
+          <span class="term-chip">fairness AI creative content</span>
+        </div>`
+      }
+    ]
+  },
+  {
+    title: "Gap Analysis",
+    desc: "Synthesize what exists vs. what's missing. Your study sits at the exact intersection of two under-studied pairings. Articulate each gap clearly — this is what justifies your 2×2 design.",
+    color: "#c8a96e",
+    steps: [
+      {
+        title: "Identify the Three Structural Gaps",
+        badge: "badge-gap", badgeLabel: "Gap",
+        content: `<p>Your literature review should reveal these core gaps:</p>
+        <div class="gap-box">
+          <div class="gap-label">Gap 1 — AI Disclosure × Music Setting</div>
+          <p>No experimental study has tested how AI co-creation disclosure affects listener evaluation of emerging artists on streaming platforms. Prior work is observational, survey-based, or domain-agnostic.</p>
+        </div>
+        <div class="gap-box">
+          <div class="gap-label">Gap 2 — AI Disclosure × Artist Race</div>
+          <p>No study has examined whether AI disclosure differentially affects evaluations depending on the perceived race of the creator. The AI × Race interaction is entirely unstudied experimentally.</p>
+        </div>
+        <div class="gap-box">
+          <div class="gap-label">Gap 3 — Mitigation vs. Amplification Direction</div>
+          <p>Theory does not yet tell us whether AI disclosure reduces racial bias (by making race less salient) or amplifies it (via dehumanization concerns for minority creators). Your 2×2 is designed to resolve this empirical question.</p>
+        </div>`
+      },
+      {
+        title: "Position Your Three Contributions",
+        badge: "badge-gap", badgeLabel: "Gap",
+        content: `<p>Frame your contribution explicitly toward each affected literature:</p>
+        <ul class="item-list">
+          <li><strong style="color:#e8e6e0">To AI Disclosure literature:</strong> First controlled experiment in a music streaming context; first to test race as a moderating variable</li>
+          <li><strong style="color:#e8e6e0">To Racial Stereotype literature:</strong> First to examine whether AI framing alters the magnitude and direction of racial evaluation bias</li>
+          <li><strong style="color:#e8e6e0">To IS/Platform literature:</strong> Practical implications for how platforms should design and deploy AI disclosure policies fairly</li>
+        </ul>
+        <div class="note-box"><strong>Tip:</strong> Build a 2×2 contribution table in your paper. Rows = AI Disclosure studied vs. not; Columns = Race studied vs. not. Show where prior work sits and where your study fills the empty cell.</div>`
+      }
+    ]
+  },
+  {
+    title: "Construct Identification",
+    desc: "Based on the gap analysis, identify which psychological and behavioral constructs your survey must capture. This is where you replace the outdated advertising-study items in your current design.",
+    color: "#b07cc8",
+    steps: [
+      {
+        title: "Primary Dependent Variables (DVs) — Revise, Don't Replace",
+        badge: "badge-construct", badgeLabel: "Construct",
+        content: `<p>Your current DVs (WTP, purchase likelihood, quality rating) are appropriate — but they need to be grounded in validated scales and expanded:</p>
+        <div class="construct-grid">
+          <div class="construct-item">
+            <div class="c-name">Willingness to Pay (WTP)</div>
+            <div class="c-why">Keep. Anchor to contingent valuation literature. Consider adding "I would not pay anything" as an opt-out. Your $1–$7 range is reasonable.</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Purchase Intention</div>
+            <div class="c-why">Keep but expand to 3-item scale. Use Dodds, Monroe & Grewal (1991) — widely cited in IS and marketing experiments.</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Perceived Quality</div>
+            <div class="c-why">Keep but separate musical quality from production quality — AI may affect these differently. Use multi-item scale (Zeithaml 1988).</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Streaming / Playlist Intent</div>
+            <div class="c-why">Add. More ecologically valid for music platforms — most users stream, not purchase. "Would you add this to a playlist?" maps directly to platform behavior.</div>
+          </div>
+        </div>`
+      },
+      {
+        title: "Mediating Constructs — The Theoretical Engine",
+        badge: "badge-construct", badgeLabel: "Construct",
+        content: `<p>These explain <em>why</em> AI disclosure and race affect evaluations. Without them, you have a black-box interaction with no theoretical contribution.</p>
+        <div class="construct-grid">
+          <div class="construct-item">
+            <div class="c-name">Perceived Authenticity</div>
+            <div class="c-why">Central mediator. AI disclosure likely reduces authenticity; racial stereotypes also modulate authenticity expectations by genre. Use Beverland & Farrelly (2010) scale.</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Perceived Effort / Labor</div>
+            <div class="c-why">AI may signal reduced human effort. From labor illusion literature (Norton et al. 2012). Especially relevant when AI is seen as doing the "creative work" for the artist.</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Perceived Creativity</div>
+            <div class="c-why">AI disclosure may suppress or enhance perceived creativity depending on framing. Use a validated creativity perception scale (e.g., Amabile items adapted).</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Artist–Technology Congruence</div>
+            <div class="c-why">Does AI feel consistent with the artist's racial/genre identity? Congruence theory predicts stronger negative effects when AI use is unexpected for the artist type.</div>
+          </div>
+        </div>`
+      },
+      {
+        title: "Racial Stereotype Activation Constructs",
+        badge: "badge-construct", badgeLabel: "Construct",
+        content: `<p>You cannot just assume stereotypes are activated — you need to measure the mechanisms:</p>
+        <div class="construct-grid">
+          <div class="construct-item">
+            <div class="c-name">Artist Credibility</div>
+            <div class="c-why">Trustworthiness + expertise dimensions. Stereotypes often operate through credibility attributions. Use Ohanian (1990) endorsed credibility scale (3 sub-dimensions).</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Warmth & Competence</div>
+            <div class="c-why">Stereotype Content Model (SCM) — Fiske et al. (2002). Black individuals are often stereotyped on these dimensions context-dependently. SCM is clean, well-validated, and widely cited.</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Perceived Originality</div>
+            <div class="c-why">Racial stereotypes in music often manifest as assumptions about originality vs. derivative work — especially when AI is also perceived as derivative. A double-devaluation risk.</div>
+          </div>
+          <div class="construct-item">
+            <div class="c-name">Dehumanization Concern</div>
+            <div class="c-why">AI + minority creator may trigger concern that the artist was "replaced" or commodified by AI. Include 2–3 items tapping into dehumanization of the artist's creative role.</div>
+          </div>
+        </div>`
+      },
+      {
+        title: "Moderating Variables & Boundary Conditions",
+        badge: "badge-construct", badgeLabel: "Construct",
+        content: `<p>These define for whom and under what conditions the AI × Race interaction holds:</p>
+        <ul class="item-list">
+          <li><strong style="color:#e8e6e0">Need for Cognition (NFC):</strong> High-NFC individuals process disclosure more carefully — classic moderator in transparency studies. Use Cacioppo & Petty short form (6 items)</li>
+          <li><strong style="color:#e8e6e0">AI Familiarity / Prior AI Use:</strong> You already have this in demographics — keep and scale it appropriately (not just frequency of ChatGPT use for writing)</li>
+          <li><strong style="color:#e8e6e0">Music Genre Preference:</strong> Participants with strong genre-race schemas (e.g., expecting Black artists to do R&B) may show amplified effects</li>
+          <li><strong style="color:#e8e6e0">Racial Prejudice (Modern Racism Scale or SDO-7):</strong> Who is driving the effect? Include a brief validated scale to identify prejudice as a boundary condition</li>
+          <li><strong style="color:#e8e6e0">Participant Race (self-reported):</strong> In-group/out-group dynamics may reverse the direction of racial bias — critical to collect and analyze</li>
+        </ul>`
+      },
+      {
+        title: "Outdated Constructs to Remove from Your Current Survey",
+        badge: "badge-construct", badgeLabel: "Construct",
+        content: `<p>Your current items are clearly from a writing/advertising study. Remove or rewrite all of the following:</p>
+        <ul class="item-list">
+          <li>All questions about advertising copy, writing tasks, and marketing experience — entirely wrong context</li>
+          <li>AI writing tool usage frequency (ChatGPT for writing tasks) — replace with general AI awareness or music-specific AI familiarity</li>
+          <li>"What characteristics should good advertising copy have?" — remove entirely</li>
+          <li>The "top 20% of creators" bonus framing — participants are listeners, not creators; this primes the wrong schema and may invalidate your study</li>
+          <li>Exit debriefing text referencing the $8 base + writing bonus — update to match your actual compensation and task</li>
+          <li>Quality rating response labels ("Extremely unlikely" for a quality question) — a carryover error from the purchase intention scale; fix labels</li>
+        </ul>
+        <div class="note-box"><strong>Audit rule:</strong> Read each item and ask — "Does this make sense for someone who just listened to 4 songs and evaluated an artist profile?" If the answer is no, remove or rewrite it.</div>`
+      }
+    ]
+  },
+  {
+    title: "Survey Redesign & Hypotheses",
+    desc: "Translate the constructs into a coherent survey flow and derive formal hypotheses from the theoretical framework you've built.",
+    color: "#6ec8a0",
+    steps: [
+      {
+        title: "Recommended Survey Flow (Block Structure)",
+        badge: "badge-design", badgeLabel: "Design",
+        content: `<p>Restructure your Qualtrics/survey tool into this block order:</p>
+        <ul class="item-list">
+          <li><strong style="color:#e8e6e0">Block 1 — Consent + Eligibility Screening:</strong> Age 18+, English comprehension, headphones confirmation</li>
+          <li><strong style="color:#e8e6e0">Block 2 — Platform Introduction (Manipulation):</strong> Randomize to AI Disclosure vs. No Disclosure condition. Your current text is well-written — keep it</li>
+          <li><strong style="color:#e8e6e0">Block 3 — Stimulus Exposure + Per-Song Evaluation:</strong> 4 songs with Black or White artist profile (randomized condition). WTP, purchase intent, quality per song</li>
+          <li><strong style="color:#e8e6e0">Block 4 — Artist-Level Constructs:</strong> Post-listening evaluation of the artist. Authenticity, credibility, warmth/competence, creativity, dehumanization concern</li>
+          <li><strong style="color:#e8e6e0">Block 5 — Manipulation Checks:</strong> Your two existing items are appropriate — keep both</li>
+          <li><strong style="color:#e8e6e0">Block 6 — Moderators:</strong> NFC short form, music genre preference, AI familiarity</li>
+          <li><strong style="color:#e8e6e0">Block 7 — Individual Differences:</strong> Racial prejudice scale (brief), participant race/ethnicity, standard demographics</li>
+          <li><strong style="color:#e8e6e0">Block 8 — Attention Checks:</strong> Keep your 3 existing attention check items; they're well-constructed</li>
+          <li><strong style="color:#e8e6e0">Block 9 — Debrief:</strong> After data collection, reveal true study purpose (IRB requirement for deception studies)</li>
+        </ul>`
+      },
+      {
+        title: "Validated Scale Sources",
+        badge: "badge-write", badgeLabel: "Writing",
+        content: `<p>Pull items from these validated instruments — do not write constructs from scratch:</p>
+        <ul class="item-list">
+          <li><strong style="color:#e8e6e0">Purchase Intention:</strong> Dodds, Monroe & Grewal (1991) — 3-item, gold standard in IS/marketing experiments</li>
+          <li><strong style="color:#e8e6e0">Perceived Quality:</strong> Zeithaml (1988); Bolton & Drew (1991) for service/experience goods</li>
+          <li><strong style="color:#e8e6e0">Perceived Authenticity:</strong> Beverland & Farrelly (2010); or Grayson & Martinec (2004)</li>
+          <li><strong style="color:#e8e6e0">Stereotype Content Model (Warmth/Competence):</strong> Fiske et al. (2002) — standard 6–8 item version, well validated</li>
+          <li><strong style="color:#e8e6e0">Source/Artist Credibility:</strong> Ohanian (1990) — expertise + trustworthiness + attractiveness sub-scales</li>
+          <li><strong style="color:#e8e6e0">Need for Cognition:</strong> Cacioppo & Petty (1982) — use the 6-item short form to reduce survey length</li>
+          <li><strong style="color:#e8e6e0">Social Dominance Orientation:</strong> Pratto et al. SDO-7 (2013) — 4-item short form acceptable</li>
+          <li><strong style="color:#e8e6e0">Modern Racism Scale:</strong> McConahay (1986) — alternative if SDO feels too political for your IRB context</li>
+        </ul>`
+      },
+      {
+        title: "Hypotheses to Derive from This Framework",
+        badge: "badge-write", badgeLabel: "Writing",
+        content: `<p>Your constructs and gaps map directly to these testable hypotheses:</p>
+        <ul class="item-list">
+          <li><strong style="color:#e8e6e0">H1 (AI Disclosure Main Effect):</strong> AI co-creation disclosure reduces WTP, purchase intention, and perceived quality compared to no disclosure</li>
+          <li><strong style="color:#e8e6e0">H2 (Race Main Effect):</strong> Black artist profiles receive lower evaluations than White artist profiles, replicating racial bias in music evaluation</li>
+          <li><strong style="color:#e8e6e0">H3a (Mitigation Hypothesis):</strong> AI disclosure reduces the racial evaluation gap — AI framing makes race less salient, dampening stereotype activation</li>
+          <li><strong style="color:#e8e6e0">H3b (Amplification Hypothesis — competing):</strong> AI disclosure enlarges the racial evaluation gap — dehumanization compounds racial bias specifically for Black artists</li>
+          <li><strong style="color:#e8e6e0">H4 (Mediation):</strong> Perceived authenticity and warmth/competence perceptions mediate the AI × Race interaction effect on evaluations</li>
+          <li><strong style="color:#e8e6e0">H5 (Moderation):</strong> The AI × Race interaction is stronger for participants with higher racial prejudice scores and stronger genre-race schemas</li>
+        </ul>
+        <div class="note-box"><strong>Key:</strong> H3a vs. H3b is your central unanswered question — the existing literature cannot adjudicate between them, making your experiment a genuine empirical contribution rather than a replication.</div>`
+      }
+    ]
+  }
+];
+
+let currentPhase = 0;
+
+function renderProgress() {
+  document.getElementById('progressTrack').innerHTML = phases.map((p, i) => `
+    <div class="prog-node ${i < currentPhase ? 'done' : i === currentPhase ? 'active' : ''}" onclick="goToPhase(${i})">
+      <div class="prog-dot">${i < currentPhase ? '✓' : i + 1}</div>
+      <div class="prog-label">${p.title.split(' ').slice(0,2).join(' ')}</div>
+    </div>
+  `).join('');
+}
+
+function renderPhase() {
+  const p = phases[currentPhase];
+  const hdr = document.getElementById('phaseHeader');
+  hdr.innerHTML = `<div class="phase-number">0${currentPhase + 1}</div><div class="phase-info"><h2>${p.title}</h2><p class="phase-desc">${p.desc}</p></div>`;
+  hdr.style.borderLeftColor = p.color;
+
+  document.getElementById('stepsContainer').innerHTML = p.steps.map((s, i) => `
+    <div class="step-card" id="step-${i}" style="animation-delay:${i * 0.07}s">
+      <div class="step-header" onclick="toggleStep(${i})">
+        <div class="step-num">0${i + 1}</div>
+        <div class="step-title">${s.title}</div>
+        <span class="step-badge ${s.badge}">${s.badgeLabel}</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body"><div class="step-content">${s.content}</div></div>
+    </div>
+  `).join('');
+
+  document.getElementById('phaseCount').textContent = `Phase ${currentPhase + 1} of ${phases.length}`;
+  document.getElementById('btnPrev').disabled = currentPhase === 0;
+  document.getElementById('btnNext').disabled = currentPhase === phases.length - 1;
+  document.getElementById('btnNext').textContent = currentPhase === phases.length - 1 ? '✓ All Phases Complete' : 'Next Phase →';
+}
+
+function toggleStep(i) { document.getElementById('step-' + i).classList.toggle('open'); }
+function changePhase(d) { const n = currentPhase + d; if (n >= 0 && n < phases.length) { currentPhase = n; renderProgress(); renderPhase(); window.scrollTo({top:0,behavior:'smooth'}); } }
+function goToPhase(i) { currentPhase = i; renderProgress(); renderPhase(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+renderProgress(); renderPhase();
+</script>
+</body>
+</html>
